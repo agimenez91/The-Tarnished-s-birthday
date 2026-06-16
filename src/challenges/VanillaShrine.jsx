@@ -1,28 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
 
-const CYCLE_MS = 2000
-const ZONE_START = 38
-const ZONE_WIDTH = 24
 const PARRIES_NEEDED = 3
 const FEEDBACK_MS = 500
 const VICTORY_DELAY_MS = 1300
+const ZONE_START = 38
+
+// Two offerings: the second is swifter and its golden zone is narrower.
+const OFFERINGS = [
+  { cycleMs: 2000, zoneWidth: 24 },
+  { cycleMs: 1300, zoneWidth: 18 },
+]
+const TOTAL_OFFERINGS = OFFERINGS.length
 
 const FLAVOR_IDLE =
-  'El Shrine Guardian alza su espada en silencio. Observa el indicador y golpea solo cuando brille en dorado.'
+  'El guardián de la capilla alza su espada en silencio. Observa el indicador y golpea solo cuando brille en dorado.'
 const FLAVOR_FAIL = 'El enemigo golpea con precisión... Reponte, Tarnished, e inténtalo de nuevo.'
 const FLAVOR_SUCCESS = [
-  'Una parada perfecta. El Guardian se tambalea, desequilibrado.',
-  'El acero resuena una vez más: el Guardian flaquea, casi vencido.',
+  'Una parada perfecta. El guardián se tambalea, desequilibrado.',
+  'El acero resuena una vez más: el guardián flaquea, casi vencido.',
 ]
-const FLAVOR_VICTORY = 'El Guardian cae, disolviéndose en motas de luz dorada...'
+const FLAVOR_VICTORY = 'El guardián cae, disolviéndose en motas de luz dorada...'
 
 export default function VanillaShrine({ onComplete }) {
+  const [offering, setOffering] = useState(0) // index into OFFERINGS
+  const [phase, setPhase] = useState('fighting') // 'fighting' | 'offering-clear'
   const [streak, setStreak] = useState(0)
   const [indicatorPos, setIndicatorPos] = useState(0)
   const [flash, setFlash] = useState(null)
   const [guardianState, setGuardianState] = useState('idle')
   const [message, setMessage] = useState(FLAVOR_IDLE)
   const [locked, setLocked] = useState(false)
+
+  const { cycleMs, zoneWidth } = OFFERINGS[offering]
 
   const startTimeRef = useRef(null)
   const timeoutsRef = useRef([])
@@ -47,23 +56,22 @@ export default function VanillaShrine({ onComplete }) {
     [],
   )
 
-  // Indicator bounces back and forth across the bar (triangle wave),
-  // one full there-and-back cycle every CYCLE_MS.
+  // Indicator bounces back and forth (triangle wave), one cycle every cycleMs.
   useEffect(() => {
-    if (guardianState === 'defeated') return
-    if (startTimeRef.current === null) startTimeRef.current = performance.now()
+    if (phase !== 'fighting' || guardianState === 'defeated') return
+    startTimeRef.current = performance.now()
 
     let frame
     const tick = (now) => {
-      const elapsed = (now - startTimeRef.current) % CYCLE_MS
-      const t = elapsed / CYCLE_MS
+      const elapsed = (now - startTimeRef.current) % cycleMs
+      const t = elapsed / cycleMs
       const pos = t < 0.5 ? t * 2 * 100 : (1 - t) * 2 * 100
       setIndicatorPos(pos)
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [guardianState])
+  }, [phase, guardianState, cycleMs])
 
   const addTimeout = (fn, ms) => {
     const id = setTimeout(fn, ms)
@@ -76,12 +84,12 @@ export default function VanillaShrine({ onComplete }) {
   }
 
   const handleParry = () => {
-    if (locked || guardianState === 'defeated') return
+    if (locked || guardianState === 'defeated' || phase !== 'fighting') return
 
     setLocked(true)
     addTimeout(() => setLocked(false), FEEDBACK_MS)
 
-    const inZone = indicatorPos >= ZONE_START && indicatorPos <= ZONE_START + ZONE_WIDTH
+    const inZone = indicatorPos >= ZONE_START && indicatorPos <= ZONE_START + zoneWidth
 
     if (inZone) {
       setFlash('success')
@@ -93,7 +101,12 @@ export default function VanillaShrine({ onComplete }) {
       if (nextStreak >= PARRIES_NEEDED) {
         setGuardianState('defeated')
         setMessage(FLAVOR_VICTORY)
-        addTimeout(onComplete, VICTORY_DELAY_MS)
+
+        if (offering >= TOTAL_OFFERINGS - 1) {
+          addTimeout(onComplete, VICTORY_DELAY_MS)
+        } else {
+          addTimeout(() => setPhase('offering-clear'), VICTORY_DELAY_MS)
+        }
       } else {
         setGuardianState('hit')
         addTimeout(() => setGuardianState((s) => (s === 'hit' ? 'idle' : s)), FEEDBACK_MS)
@@ -108,6 +121,32 @@ export default function VanillaShrine({ onComplete }) {
     }
   }
 
+  const beginSecondOffering = () => {
+    setOffering((o) => o + 1)
+    setStreak(0)
+    setGuardianState('idle')
+    setMessage('La segunda ofrenda es más esquiva. El indicador se acelera...')
+    setPhase('fighting')
+    resetIndicator()
+  }
+
+  if (phase === 'offering-clear') {
+    return (
+      <div className="fade-in flex flex-col items-center gap-5 py-4 text-center">
+        <p className="font-heading text-xs uppercase tracking-[0.3em] shimmer-text">
+          Primer frasco reclamado
+        </p>
+        <p className="font-body text-sm leading-relaxed text-bone/80">
+          Una runa ha sido tuya. Pero queda una segunda ofrenda en el altar, más veloz y esquiva.
+          Demuestra de nuevo tu temple, Tarnished.
+        </p>
+        <button type="button" onClick={beginSecondOffering} className="souls-button w-full py-4 text-lg">
+          Afrontar la segunda ofrenda
+        </button>
+      </div>
+    )
+  }
+
   const isDefeated = guardianState === 'defeated'
 
   return (
@@ -119,7 +158,7 @@ export default function VanillaShrine({ onComplete }) {
       />
 
       <p className="font-heading text-xs uppercase tracking-[0.3em] text-bronze">
-        Shrine Guardian
+        Guardián de la Capilla · Ofrenda {offering + 1}/{TOTAL_OFFERINGS}
       </p>
 
       <div className="relative flex h-28 w-full items-center justify-end pr-6">
@@ -160,7 +199,7 @@ export default function VanillaShrine({ onComplete }) {
           <div className="parry-track">
             <div
               className="parry-zone"
-              style={{ left: `${ZONE_START}%`, width: `${ZONE_WIDTH}%` }}
+              style={{ left: `${ZONE_START}%`, width: `${zoneWidth}%` }}
             />
             <div className="parry-indicator" style={{ left: `${indicatorPos}%` }} />
           </div>
