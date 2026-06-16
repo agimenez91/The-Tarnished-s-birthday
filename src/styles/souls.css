@@ -297,7 +297,8 @@
 .shrine-pedestal {
   position: absolute;
   bottom: 4px;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 70%;
   height: 14px;
   border-radius: 50%;
@@ -491,7 +492,9 @@
 }
 
 .ember-core {
-  font-size: 1.75rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
   filter: drop-shadow(0 0 10px rgba(255, 140, 66, 0.5));
   animation: var(--animate-glow-pulse);
 }
@@ -880,6 +883,12 @@
   filter: drop-shadow(0 0 6px rgba(255, 214, 110, 0.5));
 }
 
+.lord-life {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: contain;
+}
+
 .lord-life.is-lost {
   opacity: 0.25;
   filter: grayscale(1);
@@ -1066,8 +1075,18 @@
   font-family: var(--font-display);
   font-size: clamp(2.4rem, 12vw, 3.5rem);
   letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  text-align: center;
   color: #c0392b;
   text-shadow: 0 0 28px rgba(192, 57, 43, 0.85);
+}
+
+.lord-death-rune {
+  width: clamp(6rem, 28vw, 9rem);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(192, 57, 43, 0.7));
+  animation: lord-death-fade 1.8s ease-out both;
 }
 
 @keyframes lord-death-fade {

@@ -52,6 +52,15 @@ export default function Inventory({ isCompleted, onBack }) {
             )
           })}
         </div>
+
+        <div className="mt-8 flex justify-center">
+          <img
+            src="/icons/red-potion.webp"
+            alt=""
+            aria-hidden
+            className="w-24 object-contain drop-shadow-[0_0_18px_rgba(200,168,78,0.25)]"
+          />
+        </div>
       </div>
     </div>
   )

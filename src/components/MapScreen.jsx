@@ -3,9 +3,9 @@ import { LEVELS } from '../data/levels'
 import Atmosphere from './Atmosphere'
 
 const STATUS_BADGE = {
-  locked: '🔒',
-  available: '⚔️',
-  completed: '✅',
+  locked: '/icons/llaves.webp',
+  available: '/icons/espada.webp',
+  completed: '/icons/piedraforja.webp',
 }
 
 function LevelNode({ level, status, align, onSelect }) {
@@ -29,9 +29,12 @@ function LevelNode({ level, status, align, onSelect }) {
       disabled={isLocked}
       className={`relative z-10 w-[78%] max-w-[280px] ${alignment} ${nodeStyles} flex items-center gap-3 rounded-sm border px-4 py-3 text-left transition-transform active:scale-[0.98] disabled:cursor-not-allowed`}
     >
-      <span className="text-3xl leading-none" aria-hidden>
-        {level.icon}
-      </span>
+      <img
+        src={level.icon}
+        alt=""
+        aria-hidden
+        className={`h-10 w-10 flex-none object-contain ${isLocked ? 'opacity-40 grayscale' : ''}`}
+      />
 
       <span className="flex-1">
         <span className="flex items-center justify-between gap-2">
@@ -42,7 +45,7 @@ function LevelNode({ level, status, align, onSelect }) {
           >
             {level.name}
           </span>
-          <span aria-hidden>{STATUS_BADGE[status]}</span>
+          <img src={STATUS_BADGE[status]} alt="" aria-hidden className="h-5 w-5 flex-none object-contain" />
         </span>
         <span className="mt-1 block font-body text-xs text-mist">
           {isLocked ? 'Sellado' : level.difficulty}
@@ -86,9 +89,9 @@ export default function MapScreen({
           type="button"
           onClick={onOpenInventory}
           aria-label="Abrir inventario"
-          className="souls-panel flex h-12 w-12 items-center justify-center text-xl text-gold"
+          className="souls-panel flex h-12 w-12 items-center justify-center text-gold"
         >
-          🎒
+          <img src="/icons/inventory.webp" alt="" aria-hidden className="h-7 w-7 object-contain" />
         </button>
       </header>
 

@@ -161,16 +161,17 @@ export default function VanillaShrine({ onComplete }) {
         Guardián de la Capilla · Ofrenda {offering + 1}/{TOTAL_OFFERINGS}
       </p>
 
-      <div className="relative flex h-28 w-full items-center justify-end pr-6">
+      <div className="relative flex h-28 w-full items-center justify-center">
         <div className="shrine-pedestal" />
         <div className="relative">
-          <span
-            className={`guardian-icon ${guardianState === 'hit' ? 'is-hit' : ''} ${
-              isDefeated ? 'is-defeated' : ''
-            }`}
-          >
-            🗿
-          </span>
+          <img
+            src="/icons/grace.webp"
+            alt=""
+            aria-hidden
+            className={`guardian-icon h-[4.5rem] w-[4.5rem] object-contain ${
+              guardianState === 'hit' ? 'is-hit' : ''
+            } ${isDefeated ? 'is-defeated' : ''}`}
+          />
           {isDefeated &&
             burstParticles.map((particle, index) => (
               <span
@@ -192,8 +193,9 @@ export default function VanillaShrine({ onComplete }) {
 
       {!isDefeated && (
         <>
-          <p className="font-heading text-sm uppercase tracking-[0.25em] text-gold">
-            ⚔️ {streak}/{PARRIES_NEEDED}
+          <p className="flex items-center justify-center gap-2 font-heading text-sm uppercase tracking-[0.25em] text-gold">
+            <img src="/icons/espada.webp" alt="" aria-hidden className="h-5 w-5 object-contain" />
+            {streak}/{PARRIES_NEEDED}
           </p>
 
           <div className="parry-track">
@@ -208,9 +210,10 @@ export default function VanillaShrine({ onComplete }) {
             type="button"
             onClick={handleParry}
             disabled={locked}
-            className="souls-button w-full py-4 text-lg"
+            className="souls-button flex w-full items-center justify-center gap-2 py-4 text-lg"
           >
-            ⚔️ Parada
+            <img src="/icons/espada.webp" alt="" aria-hidden className="h-6 w-6 object-contain" />
+            Parada
           </button>
         </>
       )}

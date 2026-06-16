@@ -316,9 +316,13 @@ export default function GoldenLord({ onComplete }) {
         <div className="lord-hud">
           <div className="lord-lives" aria-label={`${lives} de ${STARTING_LIVES} vidas restantes`}>
             {Array.from({ length: STARTING_LIVES }, (_, i) => (
-              <span key={i} className={`lord-life ${i >= lives ? 'is-lost' : ''}`} aria-hidden="true">
-                🧪
-              </span>
+              <img
+                key={i}
+                src="/icons/potion.png"
+                alt=""
+                className={`lord-life ${i >= lives ? 'is-lost' : ''}`}
+                aria-hidden="true"
+              />
             ))}
           </div>
           <p className="lord-counter">
@@ -369,6 +373,7 @@ export default function GoldenLord({ onComplete }) {
       {phase === 'dead' && (
         <div className="lord-death">
           <p className="lord-death-text">YOU DIED</p>
+          <img src="/icons/rune-of-death.webp" alt="" className="lord-death-rune" />
           <button
             type="button"
             onClick={() => startRound(round)}

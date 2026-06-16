@@ -28,6 +28,13 @@ export default function StartScreen({ onEnter, onResetProgress }) {
       <Atmosphere particleCount={18} />
 
       <div className="fade-in relative z-10 flex flex-col items-center gap-6">
+        <img
+          src="/icons/elden.png"
+          alt=""
+          aria-hidden
+          className="w-48 max-w-[60%] object-contain drop-shadow-[0_0_24px_rgba(200,168,78,0.3)] sm:w-56"
+        />
+
         <p className="font-heading text-xs uppercase tracking-[0.35em] text-bronze">
           Una prueba para el Tarnished
         </p>

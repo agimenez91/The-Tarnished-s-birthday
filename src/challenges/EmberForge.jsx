@@ -201,7 +201,7 @@ export default function EmberForge({ onComplete }) {
         ))}
 
         <div className="ember-center">
-          <span className="ember-core">🔥</span>
+          <img src="/icons/boss.webp" alt="" className="ember-core" />
           {showSpark && (
             <div className="ember-spark-container" key={`${attempt}-${round}-${phase}`}>
               {sparkParticles.map((particle, index) => (
