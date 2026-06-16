@@ -1,4 +1,4 @@
-import { LEVELS, MAIN_LEVELS, BONUS_LEVEL } from '../data/levels'
+import { LEVELS } from '../data/levels'
 import Atmosphere from './Atmosphere'
 
 const STATUS_BADGE = {
@@ -8,14 +8,14 @@ const STATUS_BADGE = {
 }
 
 function LevelNode({ level, status, align, onSelect }) {
-  const isBonus = level.type === 'bonus'
+  const isFinal = level.isFinal === true
   const isLocked = status === 'locked'
 
   const alignment = align === 'right' ? 'self-end mr-4' : 'self-start ml-4'
 
   const nodeStyles = isLocked
     ? 'border-iron bg-abyss/60 text-mist'
-    : isBonus
+    : isFinal
       ? 'souls-panel golden-glow text-gold'
       : status === 'completed'
         ? 'souls-panel text-bone'
@@ -36,7 +36,7 @@ function LevelNode({ level, status, align, onSelect }) {
         <span className="flex items-center justify-between gap-2">
           <span
             className={`font-heading text-sm uppercase tracking-wider ${
-              isBonus && !isLocked ? 'shimmer-text' : ''
+              isFinal && !isLocked ? 'shimmer-text' : ''
             }`}
           >
             {level.name}
@@ -53,15 +53,10 @@ function LevelNode({ level, status, align, onSelect }) {
 
 export default function MapScreen({
   getLevelStatus,
-  isCompleted,
   allCompleted,
   onSelectLevel,
   onOpenInventory,
 }) {
-  const allMainCompleted = MAIN_LEVELS.every((level) => isCompleted(level.id))
-  const bonusCompleted = BONUS_LEVEL ? isCompleted(BONUS_LEVEL.id) : true
-  const showBonusReveal = allMainCompleted && !bonusCompleted
-
   return (
     <div className="souls-bg relative min-h-screen overflow-hidden px-4 pb-16 pt-8">
       <Atmosphere particleCount={10} />
@@ -83,17 +78,6 @@ export default function MapScreen({
           🎒
         </button>
       </header>
-
-      {showBonusReveal && (
-        <div className="souls-panel golden-glow fade-in relative z-10 mb-8 p-4 text-center">
-          <p className="font-heading text-xs uppercase tracking-[0.3em] shimmer-text">
-            El Hollow enmudece...
-          </p>
-          <p className="mt-2 font-body text-sm leading-relaxed text-bone/80">
-            Un camino dorado se ha revelado más allá de las tres pruebas. El Golden Lord espera.
-          </p>
-        </div>
-      )}
 
       {allCompleted && (
         <div className="souls-panel golden-glow fade-in relative z-10 mb-8 p-4 text-center">

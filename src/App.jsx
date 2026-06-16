@@ -56,7 +56,6 @@ export default function App() {
   return (
     <MapScreen
       getLevelStatus={getLevelStatus}
-      isCompleted={isCompleted}
       allCompleted={allCompleted}
       onSelectLevel={handleSelectLevel}
       onOpenInventory={() => setScreen('inventory')}

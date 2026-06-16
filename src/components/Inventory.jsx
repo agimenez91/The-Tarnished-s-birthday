@@ -35,6 +35,7 @@ export default function Inventory({ isCompleted, onBack }) {
                   rune={level.rune}
                   runeName={level.runeName}
                   locked={!owned}
+                  count={level.runeCount}
                   size="text-5xl"
                 />
                 <span
@@ -42,7 +43,9 @@ export default function Inventory({ isCompleted, onBack }) {
                     owned ? 'text-gold' : 'text-mist'
                   }`}
                 >
-                  {owned ? level.runeName : '???'}
+                  {owned
+                    ? `${level.runeName}${level.runeCount > 1 ? ` ×${level.runeCount}` : ''}`
+                    : '???'}
                 </span>
                 <span className="font-body text-[11px] text-mist">{level.name}</span>
               </div>
