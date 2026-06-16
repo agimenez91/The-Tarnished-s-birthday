@@ -1,38 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import CinematicIntro from '../components/CinematicIntro'
+import {
+  TOTAL_ROUNDS,
+  ATTACKS_PER_ROUND,
+  fallDurationFor,
+  spawnIntervalFor,
+} from './goldenLordSpeed'
 
 const LANES = ['left', 'center', 'right']
 const LANE_POSITION = { left: 18, center: 50, right: 82 }
 
-const TOTAL_ATTACKS = 20
 const STARTING_LIVES = 3
-
-const FALL_MS_START = 1500
-const FALL_MS_END = 800
-const SPAWN_MS_START = 1500
-const SPAWN_MS_END = 800
 const FIRST_SPAWN_DELAY_MS = 1300
 
 const ROLL_MS = 400
 const INVULN_MS = 200
 const HIT_FLASH_MS = 350
-const INTRO_MS = 2600
 const VICTORY_DELAY_MS = 2600
 const INPUT_DEBOUNCE_MS = 300
 
 const ATTACK_TOP_START = -14
 const ATTACK_TOP_END = 88
 
-const MSG_INTRO =
-  'Más allá de las pruebas, un resplandor dorado llama. El Señor del Auric Throne espera... no para poner a prueba tu mente, sino tu instinto...'
+const INTRO_PAGES = [
+  'Más allá de las pruebas, un resplandor dorado llama.',
+  'El Señor del Trono Áureo no pone a prueba tu mente, sino tu instinto.',
+  'Cuatro piezas guarda en su trono. Cuatro veces deberás caer con gracia y alzarte de nuevo... cada vez más raudo que la anterior.',
+]
 const MSG_VICTORY = 'El Golden Lord se arrodilla ante ti, radiante y humillado al fin...'
-
-const lerp = (a, b, t) => a + (b - a) * t
-
-const fallDurationFor = (index) =>
-  lerp(FALL_MS_START, FALL_MS_END, index / (TOTAL_ATTACKS - 1))
-
-const spawnIntervalFor = (index) =>
-  lerp(SPAWN_MS_START, SPAWN_MS_END, index / (TOTAL_ATTACKS - 1))
 
 const pickLane = (prevLane) => {
   const options = prevLane ? LANES.filter((lane) => lane !== prevLane) : LANES
@@ -40,7 +35,8 @@ const pickLane = (prevLane) => {
 }
 
 export default function GoldenLord({ onComplete }) {
-  const [phase, setPhase] = useState('intro')
+  const [phase, setPhase] = useState('intro') // 'intro'|'playing'|'round-clear'|'dead'|'victory'
+  const [round, setRound] = useState(0) // 0-based round index
   const [lives, setLives] = useState(STARTING_LIVES)
   const [survived, setSurvived] = useState(0)
   const [playerLane, setPlayerLane] = useState('center')
@@ -52,6 +48,7 @@ export default function GoldenLord({ onComplete }) {
   const timeoutsRef = useRef([])
   const onCompleteRef = useRef(onComplete)
   const phaseRef = useRef(phase)
+  const roundRef = useRef(0)
   const lastInputRef = useRef(0)
 
   const attacksRef = useRef([])
@@ -84,14 +81,15 @@ export default function GoldenLord({ onComplete }) {
   }, [])
 
   useEffect(() => () => timeoutsRef.current.forEach(clearTimeout), [])
-
   useEffect(() => {
     onCompleteRef.current = onComplete
   }, [onComplete])
-
   useEffect(() => {
     phaseRef.current = phase
   }, [phase])
+  useEffect(() => {
+    roundRef.current = round
+  }, [round])
 
   // Pause the loop entirely when the tab loses focus.
   useEffect(() => {
@@ -102,7 +100,8 @@ export default function GoldenLord({ onComplete }) {
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
-  const resetGame = useCallback(() => {
+  // Start (or restart) a given round.
+  const startRound = useCallback((roundIndex) => {
     elapsedRef.current = 0
     nextSpawnRef.current = FIRST_SPAWN_DELAY_MS
     spawnedCountRef.current = 0
@@ -114,6 +113,7 @@ export default function GoldenLord({ onComplete }) {
     survivedRef.current = 0
     playerLaneRef.current = 'center'
 
+    setRound(roundIndex)
     setAttacks([])
     setLives(STARTING_LIVES)
     setSurvived(0)
@@ -123,12 +123,6 @@ export default function GoldenLord({ onComplete }) {
     setShowHint(true)
     setPhase('playing')
   }, [])
-
-  // Cinematic intro, then drop into the wave.
-  useEffect(() => {
-    if (phase !== 'intro') return
-    addTimeout(() => resetGame(), INTRO_MS)
-  }, [phase, addTimeout, resetGame])
 
   // Main game loop: spawns attacks, advances them, resolves collisions.
   useEffect(() => {
@@ -144,6 +138,7 @@ export default function GoldenLord({ onComplete }) {
       if (!pausedRef.current) {
         elapsedRef.current += delta
         const elapsed = elapsedRef.current
+        const currentRound = roundRef.current
 
         // Return to center once the dodge roll window ends.
         if (rollUntilRef.current && elapsed >= rollUntilRef.current) {
@@ -154,7 +149,7 @@ export default function GoldenLord({ onComplete }) {
         }
 
         // Spawn the next attack, never repeating the previous lane.
-        if (spawnedCountRef.current < TOTAL_ATTACKS && elapsed >= nextSpawnRef.current) {
+        if (spawnedCountRef.current < ATTACKS_PER_ROUND && elapsed >= nextSpawnRef.current) {
           const index = spawnedCountRef.current
           const lane = pickLane(lastLaneRef.current)
           lastLaneRef.current = lane
@@ -165,13 +160,13 @@ export default function GoldenLord({ onComplete }) {
               id: attackIdRef.current++,
               lane,
               spawnElapsed: elapsed,
-              fallDuration: fallDurationFor(index),
+              fallDuration: fallDurationFor(currentRound, index),
               progress: 0,
             },
           ]
 
           spawnedCountRef.current += 1
-          nextSpawnRef.current = elapsed + spawnIntervalFor(index)
+          nextSpawnRef.current = elapsed + spawnIntervalFor(currentRound, index)
           setShowHint(false)
         }
 
@@ -196,7 +191,7 @@ export default function GoldenLord({ onComplete }) {
         setAttacks([...remaining])
 
         if (resolvedCount > 0) {
-          survivedRef.current = Math.min(survivedRef.current + resolvedCount, TOTAL_ATTACKS)
+          survivedRef.current = Math.min(survivedRef.current + resolvedCount, ATTACKS_PER_ROUND)
           setSurvived(survivedRef.current)
         }
 
@@ -210,8 +205,8 @@ export default function GoldenLord({ onComplete }) {
           if (livesRef.current <= 0) nextPhase = 'dead'
         }
 
-        if (!nextPhase && survivedRef.current >= TOTAL_ATTACKS) {
-          nextPhase = 'victory'
+        if (!nextPhase && survivedRef.current >= ATTACKS_PER_ROUND) {
+          nextPhase = currentRound >= TOTAL_ROUNDS - 1 ? 'victory' : 'round-clear'
         }
 
         if (nextPhase) {
@@ -231,7 +226,6 @@ export default function GoldenLord({ onComplete }) {
 
   const handleDodge = useCallback((direction) => {
     if (phaseRef.current !== 'playing') return
-
     playerLaneRef.current = direction
     setPlayerLane(direction)
     setRollDir(direction)
@@ -256,9 +250,26 @@ export default function GoldenLord({ onComplete }) {
   const handleDodgeRight = useCallback(() => handleInput('right'), [handleInput])
 
   if (phase === 'intro') {
+    return <CinematicIntro pages={INTRO_PAGES} onDone={() => startRound(0)} />
+  }
+
+  if (phase === 'round-clear') {
     return (
-      <div className="flex min-h-[14rem] flex-col items-center justify-center gap-4 text-center">
-        <p className="cinematic-text font-display text-lg italic text-gold">{MSG_INTRO}</p>
+      <div className="fade-in flex flex-col items-center gap-5 py-6 text-center">
+        <p className="font-heading text-xs uppercase tracking-[0.3em] shimmer-text">
+          Pieza {round + 1}/{TOTAL_ROUNDS} asegurada
+        </p>
+        <p className="font-body text-sm leading-relaxed text-bone/80">
+          Una pieza del trono es tuya. El Señor se enfurece y su danza se acelera. Prepárate,
+          Tarnished.
+        </p>
+        <button
+          type="button"
+          onClick={() => startRound(round + 1)}
+          className="souls-button w-full py-4 text-lg"
+        >
+          Afrontar la siguiente embestida
+        </button>
       </div>
     )
   }
@@ -278,7 +289,7 @@ export default function GoldenLord({ onComplete }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="font-heading text-xs uppercase tracking-[0.3em] text-bronze">
-        The Auric Throne
+        El Trono Áureo · Pieza {round + 1}/{TOTAL_ROUNDS}
       </p>
 
       <div className="lord-arena golden-glow">
@@ -311,7 +322,7 @@ export default function GoldenLord({ onComplete }) {
             ))}
           </div>
           <p className="lord-counter">
-            Superados: {survived}/{TOTAL_ATTACKS}
+            Superados: {survived}/{ATTACKS_PER_ROUND}
           </p>
         </div>
 
@@ -358,7 +369,11 @@ export default function GoldenLord({ onComplete }) {
       {phase === 'dead' && (
         <div className="lord-death">
           <p className="lord-death-text">YOU DIED</p>
-          <button type="button" onClick={resetGame} className="souls-button px-8 py-4 text-lg">
+          <button
+            type="button"
+            onClick={() => startRound(round)}
+            className="souls-button px-8 py-4 text-lg"
+          >
             Levántate de nuevo
           </button>
         </div>
