@@ -4,7 +4,8 @@ import ChestReveal from './ChestReveal'
 
 const SKIP_CODE = '88'
 
-export default function LevelScreen({ level, alreadyCompleted, onComplete, onBack, children }) {
+export default function LevelScreen({ level, alreadyCompleted, onComplete, onBack, onFinish, children }) {
+  const isFinal = level.isFinal === true
   const [stage, setStage] = useState(alreadyCompleted ? 'reveal' : 'challenge')
   const [justCompleted, setJustCompleted] = useState(false)
   const [skipOpen, setSkipOpen] = useState(false)
@@ -67,9 +68,15 @@ export default function LevelScreen({ level, alreadyCompleted, onComplete, onBac
         {stage === 'reveal' && (
           <>
             <ChestReveal level={level} animate={justCompleted} />
-            <button type="button" onClick={onBack} className="souls-button mt-8 w-full">
-              Volver al Mapa
-            </button>
+            {isFinal && onFinish ? (
+              <button type="button" onClick={onFinish} className="souls-button mt-8 w-full">
+                Contempla tu destino
+              </button>
+            ) : (
+              <button type="button" onClick={onBack} className="souls-button mt-8 w-full">
+                Volver al Mapa
+              </button>
+            )}
           </>
         )}
       </div>

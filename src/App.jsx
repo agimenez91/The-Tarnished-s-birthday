@@ -3,6 +3,7 @@ import StartScreen from './components/StartScreen'
 import MapScreen from './components/MapScreen'
 import LevelScreen from './components/LevelScreen'
 import Inventory from './components/Inventory'
+import EndingScreen from './components/EndingScreen'
 import { useProgress } from './hooks/useProgress'
 import { getLevelById } from './data/levels'
 import VanillaShrine from './challenges/VanillaShrine'
@@ -37,6 +38,10 @@ export default function App() {
     return <Inventory isCompleted={isCompleted} onBack={() => setScreen('map')} />
   }
 
+  if (screen === 'ending') {
+    return <EndingScreen onBack={() => setScreen('map')} />
+  }
+
   if (screen === 'level' && activeLevelId) {
     const level = getLevelById(activeLevelId)
     const ChallengeComponent = CHALLENGE_COMPONENTS[activeLevelId]
@@ -47,6 +52,7 @@ export default function App() {
         alreadyCompleted={isCompleted(activeLevelId)}
         onComplete={() => completeLevel(activeLevelId)}
         onBack={() => setScreen('map')}
+        onFinish={() => setScreen('ending')}
       >
         {(onChallengeComplete) => <ChallengeComponent onComplete={onChallengeComplete} />}
       </LevelScreen>

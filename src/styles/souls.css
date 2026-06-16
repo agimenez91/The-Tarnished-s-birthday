@@ -293,6 +293,54 @@
   animation: var(--animate-fade-in);
 }
 
+/* Ending screen: Melina's portrait + layered scrim for text contrast */
+.ending-scene {
+  background-color: var(--color-void);
+}
+
+.ending-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/melina-wall.jpg');
+  background-size: cover;
+  background-position: center 22%;
+  z-index: 0;
+}
+
+/* Darkens the bright flames so gold/bone text stays legible: a heavy bottom
+   gradient over the cloak, a softer top fade, and an overall tint. */
+.ending-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(8, 5, 2, 0.1) 18%,
+      rgba(8, 5, 2, 0.4) 38%,
+      rgba(5, 3, 1, 0.8) 60%,
+      rgba(3, 2, 1, 0.97) 88%
+    ),
+    radial-gradient(ellipse 95% 65% at 50% 100%, rgba(3, 2, 1, 0.9), transparent 82%);
+}
+
+.ending-eyebrow {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+.ending-title {
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.85);
+}
+
+.ending-body p {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
+}
+
+.ending-blessing {
+  text-shadow: 0 0 16px rgba(200, 168, 78, 0.6), 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
 /* Vanilla Shrine: parry timing challenge */
 .shrine-pedestal {
   position: absolute;
