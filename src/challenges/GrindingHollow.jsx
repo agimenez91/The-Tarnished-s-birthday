@@ -1,0 +1,281 @@
+import { useEffect, useRef, useState } from 'react'
+
+const MESSAGE = 'SEEK THE WARMTH WITHIN'
+const TOTAL_LETTERS = MESSAGE.replace(/\s/g, '').length
+const FREE_HINTS = ['W', 'E', 'T']
+
+// Elder Futhark runes, excluding the four runes already awarded as level
+// rewards (ᚠ ᚢ ᚦ ᚨ) so the cipher never overlaps with earned runes.
+const RUNE_POOL = [
+  'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ',
+  'ᛉ', 'ᛊ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛟ', 'ᛞ',
+]
+
+const ALPHABET = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
+
+const INTRO_MS = 2600
+const ENGRAVE_MS = 550
+const FAIL_FEEDBACK_MS = 1600
+const VICTORY_DELAY_MS = 2400
+
+const MSG_INTRO = 'Una presencia se agita en la oscuridad...'
+const MSG_FAIL = 'El texto se resiste. Las runas vuelven a quedar quietas y silenciosas.'
+const MSG_VICTORY = 'La piedra se enciende con fuego dorado, y la verdad queda al descubierto...'
+
+const shuffle = (items) => {
+  const result = [...items]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
+// Generates a fresh rune <-> letter mapping at mount time so the answer
+// can never be read by inspecting the source.
+const buildCipher = () => {
+  const uniqueLetters = [...new Set(MESSAGE.replace(/\s/g, '').split(''))]
+  const runes = shuffle(RUNE_POOL).slice(0, uniqueLetters.length)
+  const letterToRune = {}
+  uniqueLetters.forEach((letter, i) => {
+    letterToRune[letter] = runes[i]
+  })
+  return { letterToRune, uniqueLetters }
+}
+
+export default function GrindingHollow({ onComplete }) {
+  const [cipher] = useState(buildCipher)
+  const [assignments, setAssignments] = useState(() => {
+    const initial = {}
+    FREE_HINTS.forEach((letter) => {
+      initial[cipher.letterToRune[letter]] = letter
+    })
+    return initial
+  })
+  const [phase, setPhase] = useState('intro')
+  const [selectedRune, setSelectedRune] = useState(null)
+  const [flashRune, setFlashRune] = useState(null)
+  const [result, setResult] = useState(null)
+  const [showCodex, setShowCodex] = useState(false)
+
+  const timeoutsRef = useRef([])
+
+  const [victoryParticles] = useState(() =>
+    Array.from({ length: 20 }, () => {
+      const angle = Math.random() * Math.PI * 2
+      const distance = 50 + Math.random() * 90
+      return {
+        px: Math.cos(angle) * distance,
+        py: Math.sin(angle) * distance,
+        delay: Math.random() * 0.4,
+        size: 3 + Math.random() * 4,
+      }
+    }),
+  )
+
+  const addTimeout = (fn, ms) => {
+    const id = setTimeout(fn, ms)
+    timeoutsRef.current.push(id)
+    return id
+  }
+
+  useEffect(() => () => timeoutsRef.current.forEach(clearTimeout), [])
+
+  // Slow cinematic fade-in before the puzzle itself appears.
+  useEffect(() => {
+    if (phase !== 'intro') return
+    addTimeout(() => setPhase('puzzle'), INTRO_MS)
+  }, [phase])
+
+  const cipherChars = MESSAGE.split('').map((char) =>
+    char === ' ' ? ' ' : cipher.letterToRune[char],
+  )
+
+  const decodedChars = MESSAGE.split('').map((char, i) =>
+    char === ' ' ? ' ' : assignments[cipherChars[i]] ?? null,
+  )
+
+  const correctCount = MESSAGE.split('').reduce((acc, char, i) => {
+    if (char === ' ') return acc
+    return decodedChars[i] === char ? acc + 1 : acc
+  }, 0)
+
+  const healthPercent = Math.max(0, 100 - Math.round((correctCount / TOTAL_LETTERS) * 100))
+  const isSolved = correctCount === TOTAL_LETTERS
+
+  const handleSelectRune = (rune) => {
+    setResult(null)
+    setSelectedRune((prev) => (prev === rune ? null : rune))
+  }
+
+  const handleAssign = (letter) => {
+    if (!selectedRune) return
+    setAssignments((prev) => ({ ...prev, [selectedRune]: letter }))
+    setFlashRune(selectedRune)
+    addTimeout(() => setFlashRune(null), ENGRAVE_MS)
+    setSelectedRune(null)
+    setResult(null)
+  }
+
+  const handleDecipher = () => {
+    if (isSolved) {
+      setSelectedRune(null)
+      setPhase('victory')
+      addTimeout(onComplete, VICTORY_DELAY_MS)
+      return
+    }
+    setResult('fail')
+    addTimeout(() => setResult(null), FAIL_FEEDBACK_MS)
+  }
+
+  if (phase === 'intro') {
+    return (
+      <div className="flex min-h-[14rem] flex-col items-center justify-center gap-4 text-center">
+        <p className="cinematic-text font-display text-lg italic text-gold">{MSG_INTRO}</p>
+      </div>
+    )
+  }
+
+  if (phase === 'victory') {
+    return (
+      <div className="relative flex flex-col items-center gap-6 py-4 text-center">
+        {victoryParticles.map((particle, index) => (
+          <span
+            key={index}
+            className="boss-victory-particle"
+            style={{
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              animationDelay: `${particle.delay}s`,
+              '--px': `${particle.px}px`,
+              '--py': `${particle.py}px`,
+            }}
+          />
+        ))}
+        <p className="rune-cipher-text boss-victory-message">{MESSAGE}</p>
+        <p className="font-display text-2xl shimmer-text">EL HOLLOW HA SIDO VENCIDO</p>
+        <p className="font-body text-sm leading-relaxed text-bone/80">{MSG_VICTORY}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="boss-frame relative flex flex-col gap-5 p-4 text-center">
+      <span className="boss-corner boss-corner--tr" aria-hidden="true" />
+      <span className="boss-corner boss-corner--bl" aria-hidden="true" />
+
+      <p className="font-body text-sm italic leading-relaxed text-bone/70">
+        En el hollow más profundo, donde todo se muele hasta volverse polvo y nace de nuevo,
+        espera la verdad final. El antiguo texto guarda su significado: solo los dignos podrán
+        leer lo que fue escrito en la piedra.
+      </p>
+
+      <div>
+        <p className="mb-1 font-heading text-[10px] uppercase tracking-[0.3em] text-bronze">
+          La Resolución del Hollow
+        </p>
+        <div className="boss-health-track">
+          <div className="boss-health-fill" style={{ width: `${healthPercent}%` }} />
+        </div>
+      </div>
+
+      <div className="rune-cipher-text flex flex-wrap items-center justify-center gap-y-2">
+        {cipherChars.map((rune, i) =>
+          rune === ' ' ? (
+            <span key={i} className="inline-block w-3" aria-hidden="true" />
+          ) : (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleSelectRune(rune)}
+              aria-label={`Runa ${rune}`}
+              className={`cipher-rune-btn ${selectedRune === rune ? 'is-selected' : ''} ${
+                decodedChars[i] ? 'is-assigned' : ''
+              }`}
+            >
+              {rune}
+            </button>
+          ),
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-2">
+        {MESSAGE.split('').map((char, i) =>
+          char === ' ' ? (
+            <span key={i} className="inline-block w-3" aria-hidden="true" />
+          ) : (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleSelectRune(cipherChars[i])}
+              aria-label={`Casilla del cifrado ${i + 1}, ${decodedChars[i] ? `actualmente ${decodedChars[i]}` : 'vacía'}`}
+              className={`cipher-tile ${decodedChars[i] ? 'is-filled' : ''} ${
+                selectedRune === cipherChars[i] ? 'is-active' : ''
+              } ${flashRune === cipherChars[i] ? 'is-engrave' : ''} ${
+                result === 'fail'
+                  ? decodedChars[i] === char
+                    ? 'is-correct'
+                    : 'is-wrong'
+                  : ''
+              }`}
+            >
+              {decodedChars[i] ?? '_'}
+            </button>
+          ),
+        )}
+      </div>
+
+      {selectedRune && (
+        <div className="souls-panel fade-in flex flex-col gap-3 p-4">
+          <p className="font-heading text-xs uppercase tracking-[0.25em] text-bronze">
+            Asigna una letra a <span className="text-xl text-gold">{selectedRune}</span>
+          </p>
+          <div className="letter-picker-grid">
+            {ALPHABET.map((letter) => (
+              <button
+                key={letter}
+                type="button"
+                onClick={() => handleAssign(letter)}
+                className={`letter-picker-btn ${
+                  assignments[selectedRune] === letter ? 'is-current' : ''
+                }`}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setShowCodex((s) => !s)}
+        className="font-heading text-xs uppercase tracking-[0.25em] text-bronze underline underline-offset-4"
+      >
+        {showCodex ? 'Ocultar' : 'Revelar'} el Códice de Runas
+      </button>
+
+      {showCodex && (
+        <div className="rune-table fade-in">
+          {cipher.uniqueLetters.map((letter) => {
+            const rune = cipher.letterToRune[letter]
+            return (
+              <div key={letter} className="rune-table-entry">
+                <span className="rune">{rune}</span>
+                <span className="letter">{assignments[rune] ?? '?'}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <p className="min-h-[2.5rem] font-body text-sm leading-relaxed text-bone/80">
+        {result === 'fail' ? MSG_FAIL : ' '}
+      </p>
+
+      <button type="button" onClick={handleDecipher} className="souls-button w-full py-4 text-lg">
+        Descifrar
+      </button>
+    </div>
+  )
+}
