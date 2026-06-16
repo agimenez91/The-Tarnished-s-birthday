@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { LEVELS } from '../data/levels'
 import Atmosphere from './Atmosphere'
 
@@ -56,7 +57,19 @@ export default function MapScreen({
   allCompleted,
   onSelectLevel,
   onOpenInventory,
+  onResetProgress,
 }) {
+  const [confirmingReset, setConfirmingReset] = useState(false)
+
+  const handleResetClick = () => {
+    if (confirmingReset) {
+      onResetProgress()
+      setConfirmingReset(false)
+    } else {
+      setConfirmingReset(true)
+    }
+  }
+
   return (
     <div className="souls-bg relative min-h-screen overflow-hidden px-4 pb-16 pt-8">
       <Atmosphere particleCount={10} />
@@ -101,6 +114,25 @@ export default function MapScreen({
             />
           </div>
         ))}
+      </div>
+
+      <div className="relative z-10 mt-12 flex flex-col items-center gap-2">
+        {confirmingReset && (
+          <p className="fade-in font-body text-xs leading-relaxed text-mist">
+            Esto borrará todo tu progreso. Toca de nuevo para confirmar.
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={handleResetClick}
+          onBlur={() => setConfirmingReset(false)}
+          style={confirmingReset ? { color: '#c0563f' } : undefined}
+          className={`font-heading text-[10px] uppercase tracking-[0.3em] underline underline-offset-4 transition-colors ${
+            confirmingReset ? '' : 'text-mist'
+          }`}
+        >
+          {confirmingReset ? '¿Abandonar todas las pruebas?' : 'Reiniciar las pruebas'}
+        </button>
       </div>
     </div>
   )

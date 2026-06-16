@@ -59,6 +59,7 @@ export default function App() {
       allCompleted={allCompleted}
       onSelectLevel={handleSelectLevel}
       onOpenInventory={() => setScreen('inventory')}
+      onResetProgress={resetProgress}
     />
   )
 }
