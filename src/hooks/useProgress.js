@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { LEVELS, MAIN_LEVELS, BONUS_LEVEL } from '../data/levels'
+import { LEVELS } from '../data/levels'
+import { FIRST_LEVEL_ID, isLevelUnlocked, nextLevelId } from './progressLogic'
 
 const STORAGE_KEY = 'tarnished-progress'
-
-const FIRST_LEVEL_ID = MAIN_LEVELS[0]?.id
 
 const defaultProgress = () => ({
   completedLevels: [],
@@ -47,23 +46,7 @@ export function useProgress() {
   )
 
   const isUnlocked = useCallback(
-    (levelId) => {
-      const level = LEVELS.find((entry) => entry.id === levelId)
-      if (!level) return false
-
-      if (level.type === 'bonus') {
-        return MAIN_LEVELS.every((entry) =>
-          progress.completedLevels.includes(entry.id),
-        )
-      }
-
-      if (level.order === 1) return true
-
-      const previous = MAIN_LEVELS.find(
-        (entry) => entry.order === level.order - 1,
-      )
-      return previous ? progress.completedLevels.includes(previous.id) : false
-    },
+    (levelId) => isLevelUnlocked(levelId, progress.completedLevels),
     [progress.completedLevels],
   )
 
@@ -79,20 +62,11 @@ export function useProgress() {
   const completeLevel = useCallback((levelId) => {
     setProgress((prev) => {
       if (prev.completedLevels.includes(levelId)) return prev
-
       const completedLevels = [...prev.completedLevels, levelId]
-
-      const nextMain = MAIN_LEVELS.find(
-        (entry) => !completedLevels.includes(entry.id),
-      )
-      const allMainDone = !nextMain
-      const nextLevel = nextMain
-        ? nextMain.id
-        : allMainDone && BONUS_LEVEL && !completedLevels.includes(BONUS_LEVEL.id)
-          ? BONUS_LEVEL.id
-          : prev.currentLevel
-
-      return { completedLevels, currentLevel: nextLevel }
+      return {
+        completedLevels,
+        currentLevel: nextLevelId(completedLevels) ?? prev.currentLevel,
+      }
     })
   }, [])
 
