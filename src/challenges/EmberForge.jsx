@@ -8,13 +8,18 @@ const RUNES = [
 ]
 
 const TOTAL_ROUNDS = 5
-const LIGHT_MS = 800
-const PAUSE_MS = 300
 const PRE_SHOW_MS = 700
 const CORRECT_FLASH_MS = 350
 const ROUND_PAUSE_MS = 900
 const FAIL_PAUSE_MS = 1800
 const VICTORY_DELAY_MS = 1400
+
+// Two attempts: the second lights the sequence faster.
+const ATTEMPTS = [
+  { lightMs: 800, pauseMs: 300 },
+  { lightMs: 500, pauseMs: 200 },
+]
+const TOTAL_ATTEMPTS = ATTEMPTS.length
 
 const MSG_SHOWING = 'Observa...'
 const MSG_INPUT = 'Tu turno, Tarnished'
@@ -26,13 +31,16 @@ const randomRuneId = () => Math.floor(Math.random() * RUNES.length)
 const buildSequence = () => Array.from({ length: TOTAL_ROUNDS }, randomRuneId)
 
 export default function EmberForge({ onComplete }) {
+  const [attempt, setAttempt] = useState(0) // index into ATTEMPTS
   const [sequence, setSequence] = useState(buildSequence)
   const [round, setRound] = useState(1)
-  const [phase, setPhase] = useState('showing')
+  const [phase, setPhase] = useState('showing') // 'showing'|'input'|'fail'|'round-complete'|'victory'|'attempt-clear'
   const [litRune, setLitRune] = useState(null)
   const [feedback, setFeedback] = useState({})
   const [playerStep, setPlayerStep] = useState(0)
   const [message, setMessage] = useState(MSG_SHOWING)
+
+  const { lightMs, pauseMs } = ATTEMPTS[attempt]
 
   const timeoutsRef = useRef([])
 
@@ -74,18 +82,18 @@ export default function EmberForge({ onComplete }) {
 
     const steps = sequence.slice(0, round)
     steps.forEach((runeId, i) => {
-      const onAt = PRE_SHOW_MS + i * (LIGHT_MS + PAUSE_MS)
+      const onAt = PRE_SHOW_MS + i * (lightMs + pauseMs)
       schedule(() => setLitRune(runeId), onAt)
-      schedule(() => setLitRune(null), onAt + LIGHT_MS)
+      schedule(() => setLitRune(null), onAt + lightMs)
     })
 
     schedule(() => {
       setPhase('input')
       setMessage(MSG_INPUT)
-    }, PRE_SHOW_MS + steps.length * (LIGHT_MS + PAUSE_MS))
+    }, PRE_SHOW_MS + steps.length * (lightMs + pauseMs))
 
     return () => localIds.forEach(clearTimeout)
-  }, [phase, round, sequence])
+  }, [phase, round, sequence, lightMs, pauseMs])
 
   const handlePress = (runeId) => {
     if (phase !== 'input') return
@@ -121,9 +129,14 @@ export default function EmberForge({ onComplete }) {
     }
 
     if (round === TOTAL_ROUNDS) {
-      setPhase('victory')
-      setMessage(MSG_VICTORY)
-      addTimeout(onComplete, VICTORY_DELAY_MS)
+      if (attempt >= TOTAL_ATTEMPTS - 1) {
+        setPhase('victory')
+        setMessage(MSG_VICTORY)
+        addTimeout(onComplete, VICTORY_DELAY_MS)
+      } else {
+        setPhase('attempt-clear')
+        setMessage(MSG_VICTORY)
+      }
     } else {
       setPhase('round-complete')
       setMessage(MSG_ROUND_COMPLETE)
@@ -134,13 +147,40 @@ export default function EmberForge({ onComplete }) {
     }
   }
 
+  const beginSecondAttempt = () => {
+    setAttempt((a) => a + 1)
+    setSequence(buildSequence())
+    setRound(1)
+    setFeedback({})
+    setPlayerStep(0)
+    setLitRune(null)
+    setPhase('showing')
+  }
+
+  if (phase === 'attempt-clear') {
+    return (
+      <div className="fade-in flex flex-col items-center gap-5 py-4 text-center">
+        <p className="font-heading text-xs uppercase tracking-[0.3em] shimmer-text">
+          Primer saco forjado
+        </p>
+        <p className="font-body text-sm leading-relaxed text-bone/80">
+          Una runa arde ya en tu mano. Pero la forja guarda un segundo himno, más veloz que el
+          primero. Escúchalo bien, Tarnished.
+        </p>
+        <button type="button" onClick={beginSecondAttempt} className="souls-button w-full py-4 text-lg">
+          Escuchar el segundo himno
+        </button>
+      </div>
+    )
+  }
+
   const inputDisabled = phase !== 'input'
-  const showSpark = phase === 'round-complete' || phase === 'victory'
+  const showSpark = phase === 'round-complete' || phase === 'victory' || phase === 'attempt-clear'
 
   return (
     <div className="flex flex-col items-center gap-5 text-center">
       <p className="font-heading text-xs uppercase tracking-[0.3em] text-bronze">
-        Ember {Math.min(round, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
+        Himno {attempt + 1}/{TOTAL_ATTEMPTS} · Brasa {Math.min(round, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
       </p>
 
       <div className="ember-grid">
@@ -163,7 +203,7 @@ export default function EmberForge({ onComplete }) {
         <div className="ember-center">
           <span className="ember-core">🔥</span>
           {showSpark && (
-            <div className="ember-spark-container" key={`${round}-${phase}`}>
+            <div className="ember-spark-container" key={`${attempt}-${round}-${phase}`}>
               {sparkParticles.map((particle, index) => (
                 <span
                   key={index}
