@@ -14,7 +14,7 @@ export default function RuneDisplay({
   return (
     <span className="relative inline-flex items-center justify-center">
       <span
-        className={`font-display ${size} ${locked ? 'rune-locked' : 'rune-reveal text-gold'}`}
+        className={`rune-glyph ${size} ${locked ? 'rune-locked' : 'rune-reveal text-gold'}`}
         style={locked ? undefined : { textShadow: '0 0 16px rgba(200, 168, 78, 0.6)' }}
         role="img"
         aria-label={label}

@@ -12,6 +12,9 @@
   --font-display: 'Cinzel Decorative', serif;
   --font-heading: 'MedievalSharp', cursive;
   --font-body: 'Cinzel', serif;
+  /* Latin fonts above lack Runic glyphs; this one covers the U+16A0 block
+     so every rune renders consistently instead of a system fallback. */
+  --font-rune: 'Noto Sans Runic', 'Cinzel Decorative', serif;
 
   --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
   --animate-fade-in: fade-in 0.9s ease-out both;
@@ -278,6 +281,10 @@
   animation: var(--animate-chest-open);
 }
 
+.rune-glyph {
+  font-family: var(--font-rune);
+}
+
 .rune-reveal {
   animation: var(--animate-rune-reveal);
 }
@@ -502,7 +509,7 @@
   justify-content: center;
   min-width: 60px;
   min-height: 60px;
-  font-family: var(--font-display);
+  font-family: var(--font-rune);
   font-size: 2.25rem;
   color: var(--color-bone);
   background: linear-gradient(180deg, rgba(42, 42, 42, 0.7), rgba(10, 10, 10, 0.85));
@@ -593,19 +600,22 @@
 
 /* Grinding Hollow: boss final rune-cipher puzzle */
 
-/* Slow dramatic fade-in for the cinematic intro line */
+/* Slow dramatic fade-in for the cinematic intro line.
+   Steady letter-spacing so the text never reflows mid-animation —
+   only opacity and a faint upward drift move. */
 .cinematic-text {
-  animation: cinematic-fade 2.4s ease-out both;
+  letter-spacing: 0.08em;
+  animation: cinematic-fade 1.8s ease-out both;
 }
 
 @keyframes cinematic-fade {
-  0%, 35% {
+  0% {
     opacity: 0;
-    letter-spacing: 0.4em;
+    transform: translateY(6px);
   }
   100% {
     opacity: 1;
-    letter-spacing: 0.05em;
+    transform: translateY(0);
   }
 }
 
@@ -676,7 +686,7 @@
 
 /* Runic cipher line, carved-in-stone look */
 .rune-cipher-text {
-  font-family: var(--font-display);
+  font-family: var(--font-rune);
   font-size: 1.7rem;
   line-height: 2;
   letter-spacing: 0.05em;
@@ -818,7 +828,7 @@
 }
 
 .rune-table-entry .rune {
-  font-family: var(--font-display);
+  font-family: var(--font-rune);
   font-size: 1.2rem;
   color: var(--color-gold);
 }

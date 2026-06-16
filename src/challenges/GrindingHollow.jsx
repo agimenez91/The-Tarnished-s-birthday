@@ -190,7 +190,7 @@ export default function GrindingHollow({ onComplete }) {
       {selectedRune && (
         <div className="souls-panel fade-in flex flex-col gap-3 p-4">
           <p className="font-heading text-xs uppercase tracking-[0.25em] text-bronze">
-            Asigna una letra a <span className="text-xl text-gold">{selectedRune}</span>
+            Asigna una letra a <span className="rune-glyph text-xl text-gold">{selectedRune}</span>
           </p>
           <div className="letter-picker-grid">
             {ALPHABET.map((letter) => (

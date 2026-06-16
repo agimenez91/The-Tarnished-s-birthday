@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 
-const PARRIES_NEEDED = 3
 const FEEDBACK_MS = 500
 const VICTORY_DELAY_MS = 1300
 const ZONE_START = 38
 
-// Two offerings: the second is swifter and its golden zone is narrower.
+// Two offerings: same tempo, but the second demands a longer chain of parries.
 const OFFERINGS = [
-  { cycleMs: 2000, zoneWidth: 24 },
-  { cycleMs: 1300, zoneWidth: 18 },
+  { cycleMs: 2000, zoneWidth: 24, parries: 3 },
+  { cycleMs: 2000, zoneWidth: 24, parries: 5 },
 ]
 const TOTAL_OFFERINGS = OFFERINGS.length
 
@@ -31,7 +30,7 @@ export default function VanillaShrine({ onComplete }) {
   const [message, setMessage] = useState(FLAVOR_IDLE)
   const [locked, setLocked] = useState(false)
 
-  const { cycleMs, zoneWidth } = OFFERINGS[offering]
+  const { cycleMs, zoneWidth, parries: parriesNeeded } = OFFERINGS[offering]
 
   const startTimeRef = useRef(null)
   const timeoutsRef = useRef([])
@@ -98,7 +97,7 @@ export default function VanillaShrine({ onComplete }) {
       const nextStreak = streak + 1
       setStreak(nextStreak)
 
-      if (nextStreak >= PARRIES_NEEDED) {
+      if (nextStreak >= parriesNeeded) {
         setGuardianState('defeated')
         setMessage(FLAVOR_VICTORY)
 
@@ -125,7 +124,7 @@ export default function VanillaShrine({ onComplete }) {
     setOffering((o) => o + 1)
     setStreak(0)
     setGuardianState('idle')
-    setMessage('La segunda ofrenda es más esquiva. El indicador se acelera...')
+    setMessage('La segunda ofrenda exige una cadena más larga. Cinco paradas perfectas, Tarnished.')
     setPhase('fighting')
     resetIndicator()
   }
@@ -137,8 +136,8 @@ export default function VanillaShrine({ onComplete }) {
           Primer frasco reclamado
         </p>
         <p className="font-body text-sm leading-relaxed text-bone/80">
-          Una runa ha sido tuya. Pero queda una segunda ofrenda en el altar, más veloz y esquiva.
-          Demuestra de nuevo tu temple, Tarnished.
+          Una runa ha sido tuya. Pero queda una segunda ofrenda en el altar, que exige cinco paradas
+          encadenadas. Demuestra de nuevo tu temple, Tarnished.
         </p>
         <button type="button" onClick={beginSecondOffering} className="souls-button w-full py-4 text-lg">
           Afrontar la segunda ofrenda
@@ -195,7 +194,7 @@ export default function VanillaShrine({ onComplete }) {
         <>
           <p className="flex items-center justify-center gap-2 font-heading text-sm uppercase tracking-[0.25em] text-gold">
             <img src="/icons/espada.webp" alt="" aria-hidden className="h-5 w-5 object-contain" />
-            {streak}/{PARRIES_NEEDED}
+            {streak}/{parriesNeeded}
           </p>
 
           <div className="parry-track">

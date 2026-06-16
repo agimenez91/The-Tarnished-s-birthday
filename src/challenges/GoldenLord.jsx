@@ -13,7 +13,7 @@ const LANE_POSITION = { left: 18, center: 50, right: 82 }
 const STARTING_LIVES = 3
 const FIRST_SPAWN_DELAY_MS = 1300
 
-const ROLL_MS = 400
+const ROLL_MS = 900
 const INVULN_MS = 200
 const HIT_FLASH_MS = 350
 const VICTORY_DELAY_MS = 2600

@@ -91,7 +91,7 @@ export default function MapScreen({
           aria-label="Abrir inventario"
           className="souls-panel flex h-12 w-12 items-center justify-center text-gold"
         >
-          <img src="/icons/inventory.webp" alt="" aria-hidden className="h-7 w-7 object-contain" />
+          <img src="/icons/inventory.webp" alt="" aria-hidden className="h-9 w-9 object-contain" />
         </button>
       </header>
 
