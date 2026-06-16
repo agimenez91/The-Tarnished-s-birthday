@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Originales/borradores de imágenes (no usados por la app)
+files/

@@ -60,7 +60,7 @@ export const LEVELS = [
     type: 'main',
     isFinal: true,
     name: 'The Haligtree Sanctum',
-    icon: '/icons/malenias_great_rune.png',
+    icon: '/icons/malenias_great_rune.webp',
     rune: 'ᚨ',
     runeName: 'Runa de la Cuchilla',
     runeCount: 1,
