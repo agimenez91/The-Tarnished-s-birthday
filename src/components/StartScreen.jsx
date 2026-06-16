@@ -42,9 +42,9 @@ export default function StartScreen({ onEnter, onResetProgress }) {
         </h1>
 
         <p className="max-w-xs font-body text-sm leading-relaxed text-bone/80">
-          La ceniza cae sobre una tierra olvidada. Tres pruebas esperan... y
-          más allá de ellas, una cuarta: dorada, despiadada, reservada para
-          quienes perseveren.
+          La gracia ilumina las Tierras Intermedias. Cuatro pruebas te aguardan
+          en el camino, y al final de todas, la Cuchilla de Miquella. Reclama sus
+          runas y preséntalas ante la Doncella.
         </p>
 
         <button onClick={onEnter} className="souls-button mt-4 text-base">
