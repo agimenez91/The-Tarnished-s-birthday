@@ -12,7 +12,7 @@ const VICTORY_DELAY_MS = 2400
 
 const INTRO_PAGES = [
   'En lo más hondo del Haligtree marchito, una presencia se agita...',
-  'La diosa de la putrefacción escarlata aguarda. Su nombre fue grabado en runas antiguas.',
+  'Una presencia aguarda en la penumbra. Su nombre fue grabado en runas antiguas, esperando a quien sepa leerlo.',
   'Descifra lo que está escrito en piedra, Tarnished, y mira a los ojos a quien nunca ha conocido la derrota.',
 ]
 const MSG_FAIL = 'El texto se resiste. Las runas vuelven a quedar quietas y silenciosas.'
